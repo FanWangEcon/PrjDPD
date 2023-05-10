@@ -1,0 +1,1 @@
+In this project we study the distribution of pollution disparities across population groups. Our empirical application focuses on socio-demograhpic groups and pollution in Guangdong, China, using data from 2010.

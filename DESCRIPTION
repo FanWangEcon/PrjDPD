@@ -2,13 +2,19 @@ Package: PrjDPD
 Title: Measuring population group pollution disparities
 Version: 0.0.0.9000
 Authors@R: 
+    person("Xiuqi", "Yang", , "yangxq@sas.upenn.edu", role = c("aut"))
     person("Fan", "Wang", , "fanwecon@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2640-5420"))
+    person("Jere", "Behrman", ,, role = c("aut"),
+           comment = c(ORCID = "0000-0001-7835-6283"))
+    person("Emily", "Hannum", ,, role = c("aut"),
+           comment = c(ORCID = "0000-0003-2011-9984"))
 Description: Measuring population group pollution disparities
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
-URL: https://github.com/FanWangEcon/PrjDPD
+URL: https://github.com/FanWangEcon/PrjDPD,
+    https://fanwangecon.github.io/PrjDPD/
 BugReports: https://github.com/FanWangEcon/PrjDPD/issues

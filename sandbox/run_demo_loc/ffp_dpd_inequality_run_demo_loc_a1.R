@@ -10,10 +10,13 @@ library(ggplot2)
 
 # 2. Specify path of (1) function (2) data input (3) data output -----
 spt_root <- "C:/Users/fan/Documents/Dropbox (UH-ECON)/"
+spt_root <- "C:/Users/fan/Dropbox (UH-ECON)/"
 # 2.A Activate program
 spt_gpp <- "repos/PrjDPD/sandbox/function/"
 spt_path_func <- file.path(spt_root, spt_gpp, "ffp_dpd_inequality_func.R",
                            fsep = .Platform$file.sep)
+source(spt_path_func)
+spt_path_func <- file.path(spt_root, spt_gpp, "ffp_dpd_aux.R", fsep = .Platform$file.sep)
 source(spt_path_func)
 
 # 2.B Data input folder
@@ -66,7 +69,7 @@ ar_fl_ratio_upper <- c(0.8, 0.9)
 ar_fl_ratio_lower <- c(0.2, 0.1)
 
 # 10. Stats to compute within year ----
-st_time_stats <- "mean"
+st_time_stats <- "idtrmn"
 bl_greater <- TRUE
 ar_fl_temp_bound <- seq(5, 50, by=5)
 for (fl_temp_bound in ar_fl_temp_bound) {

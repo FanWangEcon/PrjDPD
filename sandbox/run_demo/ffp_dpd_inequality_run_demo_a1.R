@@ -66,7 +66,7 @@ ar_fl_ratio_upper <- c(0.8, 0.9)
 ar_fl_ratio_lower <- c(0.2, 0.1)
 
 # 10. Stats to compute within year ----
-st_time_stats <- "mean"
+st_time_stats <- "idtrmn"
 bl_greater <- TRUE
 ar_fl_temp_bound <- seq(5, 50, by=5)
 for (fl_temp_bound in ar_fl_temp_bound) {

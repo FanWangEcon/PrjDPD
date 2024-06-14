@@ -45,7 +45,10 @@
 #' @param bl_save_img boolean store image
 #' @param bl_save_csv boolean store data
 #' @param snm_new_file_name_prefix string file name prefix for csv and img
-#' @param st_time_stats string for type of within year stats to compute, "mean" or "share"
+#' @param st_time_stats string for type of within year stats to compute, "share" or
+#' "mean" (average above or below threshold, ignoring values below, treat as NA) or
+#' "idtrmn" (indicator-transformed, treat values below or above thresholds as 0)
+#' @param fl_person_quantile within-group quantile of interest (across columns/time for each loc/person)
 #' @param fl_temp_bound float for temperature bound if `st_time_stats` is share of days
 #' @param bl_greater boolean if to compute larger or smaller than `fl_temp_bound`
 #' @param ar_fl_percentiles array of values between 0 and 1, within and across group percentiles
@@ -80,6 +83,7 @@ ffp_demo_loc_env_inequality <- function(
     stv_grp_loc = "region_name", arv_label_loc = c("region_name"),
     str_prefix_time = "day",
     snm_new_file_name_prefix = "ineq",
+    fl_person_quantile = 0.5,
     st_time_stats = "mean", fl_temp_bound = -Inf, bl_greater = TRUE,
     ar_fl_percentiles = c(0.1, 0.2, 0.8, 0.9),
     ar_fl_ratio_upper = c(0.8, 0.9),
@@ -219,7 +223,7 @@ ffp_demo_loc_env_inequality <- function(
     df_pop_data_frac_long <- mt_pop_sedac_long_agg %>%
       left_join(df_key_loc %>%
                   select(!!sym(stv_key_loc), popgrp_region),
-                  by = stv_key_loc) %>%
+                by = stv_key_loc) %>%
       select(!!sym(stv_key_loc), popgrp_region, popgrp_age, pop) %>%
       drop_na(popgrp_region)
     # total mass sums to 94.8 percent, sum(df_pop_data_frac$pop)
@@ -268,6 +272,7 @@ ffp_demo_loc_env_inequality <- function(
 
     # Load
     tb_loc_pollution_aod_load <- readr::read_csv(st_file_envir)
+    it_col_count <- dim(tb_loc_pollution_aod_load)[2]
 
     # # Aggregate simple mean
     # tb_loc_pollution_all <- tb_loc_pollution_aod_load %>%
@@ -279,8 +284,20 @@ ffp_demo_loc_env_inequality <- function(
     #   ) %>% select(!!sym(stv_key_loc), avgdailypm10) %>%
     #   rename(location_id = !!sym(stv_key_loc))
 
+    # idtrmn = indicator transformed mean.
 
-    if (tolower(st_time_stats) == tolower("mean")) {
+    if (tolower(st_time_stats) == tolower("mean") | tolower(st_time_stats) == tolower("idtrmn")) {
+
+      # The two types of means
+      # mean = average above or below threshold, ignoring values below, treat as NA
+      # idtrmn = indicator-transformed, treat values below or above thresholds as 0
+      if (tolower(st_time_stats) == tolower("mean")) {
+        fl_thres_false_replace <- NA
+      } else if (tolower(st_time_stats) == tolower("idtrmn")) {
+        fl_thres_false_replace <- 0
+      }
+
+      # if (st_time_stats == "mean" & bl_greater == TRUE): compute indicator transformed averages
 
       # tb_loc_pollution_all <- tb_loc_pollution_aod_load %>%
       #   mutate(
@@ -291,39 +308,46 @@ ffp_demo_loc_env_inequality <- function(
       #   ) %>% select(!!sym(stv_key_loc), avgdailypm10) %>%
       #   rename(location_id = !!sym(stv_key_loc))
 
+      # if (st_time_stats == "mean" & bl_greater == TRUE): compute indicator transformed averages
+
       if (bl_greater) {
-        it_col_count <- dim(tb_loc_pollution_aod_load)[2]
         tb_loc_pollution_all <- tb_loc_pollution_aod_load %>%
-          mutate(across(contains(str_prefix_time), function(x) ifelse(x < fl_temp_bound, 0, x))) %>%
+          mutate(across(contains(str_prefix_time),
+                        function(x) ifelse(
+                          x < fl_temp_bound,
+                          fl_thres_false_replace, x))
+          ) %>%
           mutate(
             avgdailypm10 = base::rowMeans(
               dplyr::pick(contains(str_prefix_time)),
               na.rm = TRUE
             )
-          ) %>%          
+          ) %>%
           select(!!sym(stv_key_loc), avgdailypm10) %>%
           rename(location_id = !!sym(stv_key_loc))
 
       } else {
-        
-        it_col_count <- dim(tb_loc_pollution_aod_load)[2]
+
         tb_loc_pollution_all <- tb_loc_pollution_aod_load %>%
-          mutate(across(contains(str_prefix_time), function(x) ifelse(x >= fl_temp_bound, 0, x))) %>%
+          mutate(across(contains(str_prefix_time),
+                        function(x) ifelse(
+                          x >= fl_temp_bound,
+                          fl_thres_false_replace, x))
+          ) %>%
           mutate(
             avgdailypm10 = base::rowMeans(
               dplyr::pick(contains(str_prefix_time)),
               na.rm = TRUE
             )
-          ) %>%          
+          ) %>%
           select(!!sym(stv_key_loc), avgdailypm10) %>%
           rename(location_id = !!sym(stv_key_loc))
-        
+
       }
 
     } else if (tolower(st_time_stats) == tolower("share")) {
 
       if (bl_greater) {
-        it_col_count <- dim(tb_loc_pollution_aod_load)[2]
         tb_loc_pollution_all <- tb_loc_pollution_aod_load %>%
           mutate(across(contains(str_prefix_time), function(x) ifelse(x < fl_temp_bound, 0, 1))) %>%
           mutate(
@@ -331,12 +355,11 @@ ffp_demo_loc_env_inequality <- function(
               dplyr::pick(contains(str_prefix_time)),
               na.rm = TRUE
             )
-          ) %>%          
+          ) %>%
           select(!!sym(stv_key_loc), avgdailypm10) %>%
           rename(location_id = !!sym(stv_key_loc))
 
       } else {
-        it_col_count <- dim(tb_loc_pollution_aod_load)[2]
         tb_loc_pollution_all <- tb_loc_pollution_aod_load %>%
           mutate(across(contains(str_prefix_time), function(x) ifelse(x >= fl_temp_bound, 0, 1))) %>%
           mutate(
@@ -344,16 +367,39 @@ ffp_demo_loc_env_inequality <- function(
               dplyr::pick(contains(str_prefix_time)),
               na.rm = TRUE
             )
-          ) %>%          
+          ) %>%
           select(!!sym(stv_key_loc), avgdailypm10) %>%
           rename(location_id = !!sym(stv_key_loc))
-        
+
       }
+
+    } else if (tolower(st_time_stats) == tolower("quantile")) {
+
+      # data structure with only data, no locations
+      tb_loc_pollution_aod_load <- tb_loc_pollution_aod_load %>%
+        column_to_rownames(var = stv_key_loc) %>%
+        select(contains(str_prefix_time))
+
+      # Quantile by row
+      ar_quantiles_by_row <- apply(
+        tb_loc_pollution_aod_load, 1, 
+        quantile, 
+        probs=fl_person_quantile, 
+        type=1,
+        na.rm = TRUE)
+
+      # Quantiles by row to table
+      tb_loc_pollution_all <- as_tibble(ar_quantiles_by_row) %>%
+        mutate(!!sym(stv_key_loc) := names(ar_quantiles_by_row)) %>%
+        rename(avgdailypm10 = value)
+
+        # Finalize to look like other tables
+      tb_loc_pollution_all <- tb_loc_pollution_all %>%
+        select(!!sym(stv_key_loc), avgdailypm10) %>%
+        rename(location_id = !!sym(stv_key_loc)) %>% 
+        mutate(location_id = as.numeric(location_id))
+
     }
-
-
-
-
 
 
     # Merge with population id to only include locations with population

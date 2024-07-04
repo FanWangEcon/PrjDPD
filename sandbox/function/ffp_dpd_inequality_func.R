@@ -860,7 +860,11 @@ ffp_demo_loc_env_inequality <- function(
       "File saved successfully: ", spn_output_file))
   }
 
-  return(df_excburden_percentiles_keys)
+  return(list(
+      df_excburden_percentiles_keys = df_excburden_percentiles_keys,
+      df_pop_pollution_by_popgrp_cdf = df_pop_pollution_by_popgrp_cdf
+    ))
+
 }
 
 

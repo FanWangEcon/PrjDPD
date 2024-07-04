@@ -9,10 +9,13 @@ library(ggplot2)
 # library(tidyverse)
 
 # 2. Specify path of (1) function (2) data input (3) data output -----
-spt_root <- "C:/Users/fan/Documents/Dropbox (UH-ECON)/"
+spt_root <- "C:/Users/fan/Dropbox (UH-ECON)/"
 # 2.A Activate program
 spt_gpp <- "repos/PrjDPD/sandbox/function/"
 spt_path_func <- file.path(spt_root, spt_gpp, "ffp_dpd_inequality_func.R",
+                           fsep = .Platform$file.sep)
+source(spt_path_func)
+spt_path_func <- file.path(spt_root, spt_gpp, "ffp_dpd_stats_teb.R",
                            fsep = .Platform$file.sep)
 source(spt_path_func)
 
@@ -81,7 +84,7 @@ for (fl_temp_bound in ar_fl_temp_bound) {
   }
 
   # 12. Run function ----
-  df_excburden_percentiles_keys <- ffp_demo_loc_env_inequality(
+  ls_return <- ffp_demo_loc_env_inequality(
     spt_path_data, spt_path_out,
     st_file_demo = st_file_demo,
     st_file_envir = st_file_envir,
@@ -102,6 +105,7 @@ for (fl_temp_bound in ar_fl_temp_bound) {
     ar_fl_ratio_upper = ar_fl_ratio_upper,
     bl_save_img = bl_save_img, bl_save_csv = bl_save_csv,
     verbose = verbose, verbose_debug = verbose_debug)
+  df_excburden_percentiles_keys <- ls_return$df_excburden_percentiles_keys
   # print output
   print(df_excburden_percentiles_keys)
 }
